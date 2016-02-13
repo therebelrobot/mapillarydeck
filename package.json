@@ -1,0 +1,50 @@
+{
+  "name": "mapillarydeck",
+  "version": "0.0.1",
+  "description": "A Mitrhil-driven example of the Mapillary user API",
+  "main": "index.html",
+  "scripts": {
+    "test": "mocha",
+    "start": "browserify src/main.js -o bundle.js -t babelify --presets es2015",
+    "develop": "watchify src/main.js -o bundle.js -t babelify --presets es2015",
+    "develop-server": "http-server -p 5999"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/therebelrobot/mapillarydeck.git"
+  },
+  "keywords": [
+    "mapillary",
+    "tweetdeck",
+    "mithril",
+    "example",
+    "demo"
+  ],
+  "author": "Trent Oswald <trentoswald@therebelrobot.com> (@therebelrobot)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/therebelrobot/mapillarydeck/issues"
+  },
+  "homepage": "https://github.com/therebelrobot/mapillarydeck#readme",
+  "dependencies": {
+    "@kahwee/backbone-deep-model": "^2.0.2",
+    "backbone": "^1.2.3",
+    "bluebird": "^3.3.1",
+    "jquery": "^2.2.0",
+    "localforage": "^1.4.0",
+    "lodash": "^4.3.0",
+    "mithril": "^0.2.0",
+    "moment": "^2.11.2",
+    "numeral": "^1.5.3",
+    "superagent": "^1.7.2"
+  },
+  "devDependencies": {
+    "babelify": "^7.2.0",
+    "browserify": "^13.0.0",
+    "http-server": "^0.8.5",
+    "istanbul": "^0.4.2",
+    "mocha": "^2.4.5",
+    "standard": "^6.0.5",
+    "watchify": "^3.7.0"
+  }
+}
