@@ -25,6 +25,13 @@ var defaultUserList = [
 /*'juhaszlevi',*/
 /*'katrinhumal'*/
 /* None of these users returned anything */
+  'julien_n',
+  'mgageo',
+  'riblit',
+  'razia',
+  'haxpett',
+  'nielsbeck',
+  'roshan'
 ]
 
 var User = BackboneModel.extend({
@@ -55,7 +62,7 @@ var User = BackboneModel.extend({
     return new InternalPromise((resolve, reject) => {
       localForage.getItem(this.get('user')).then((storedUser) => {
         console.log(storedUser)
-        if (!storedUser.avatar) {
+        if (!storedUser || !storedUser.avatar) {
           var url = 'https://a.mapillary.com/v2/u/' +
             this.get('user') +
             '?client_id=' + clientID
@@ -65,6 +72,8 @@ var User = BackboneModel.extend({
           userCall.end((err, res) => {
             if (err) {return reject(err)}
             if (res.body) {
+              console.log(res.body.avatar)
+              res.body.avatar = res.body.avatar || 'https://placeholdit.imgix.net/~text?txtsize=20&txt=avatar%20not%20available&w=100&h=100'
               this.set(res.body)
               return this.fetchFeed().then(resolve).catch(reject)
             }
@@ -90,6 +99,7 @@ var User = BackboneModel.extend({
       userFeedCall.end((err, res) => {
         if (err) {return reject(err)}
         if (res.body) {
+          console.log(this.get('user'), res.body)
           this.set(res.body)
           return resolve()
         }

@@ -47395,8 +47395,7 @@ var localForage = require('localforage');
 
 var clientID = 'Tm01Y1kzQWpyN2RlYWczRzM0MnRVUTpjNzQ0ZDVlYTJlMTYyMmE5';
 
-var defaultUserList = ['jesolem', 'gyllen', 'peterneubauer'];
-
+var defaultUserList = ['jesolem', 'gyllen', 'peterneubauer',
 /*'yubkuang',*/
 /*'paugargallo',*/
 /*'oscarlorentz',*/
@@ -47408,6 +47407,8 @@ var defaultUserList = ['jesolem', 'gyllen', 'peterneubauer'];
 /*'juhaszlevi',*/
 /*'katrinhumal'*/
 /* None of these users returned anything */
+'julien_n', 'mgageo', 'riblit', 'razia', 'haxpett', 'nielsbeck', 'roshan'];
+
 var User = BackboneModel.extend({
   defaults: {
     about: '',
@@ -47436,7 +47437,7 @@ var User = BackboneModel.extend({
     return new InternalPromise((resolve, reject) => {
       localForage.getItem(this.get('user')).then(storedUser => {
         console.log(storedUser);
-        if (!storedUser.avatar) {
+        if (!storedUser || !storedUser.avatar) {
           var url = 'https://a.mapillary.com/v2/u/' + this.get('user') + '?client_id=' + clientID;
           var userCall = request.get(url);
           userCall.type('json');
@@ -47446,6 +47447,8 @@ var User = BackboneModel.extend({
               return reject(err);
             }
             if (res.body) {
+              console.log(res.body.avatar);
+              res.body.avatar = res.body.avatar || 'https://placeholdit.imgix.net/~text?txtsize=20&txt=avatar%20not%20available&w=100&h=100';
               this.set(res.body);
               return this.fetchFeed().then(resolve).catch(reject);
             }
@@ -47470,6 +47473,7 @@ var User = BackboneModel.extend({
           return reject(err);
         }
         if (res.body) {
+          console.log(this.get('user'), res.body);
           this.set(res.body);
           return resolve();
         }
@@ -47539,18 +47543,28 @@ var moment = require('moment');
 module.exports = function (activity) {
   return m('.card.mui-panel.image-added', {
     'data-activity-id': activity.id
-  }, [m('img.avatar', { src: activity.image_url }), m('h3', 'Image Added onto Shape'), m('h4', activity.main_description), m('em', activity.user), m('br'), m('em', activity.location), m('br'), m('em', moment(activity.updated_at / 1000, 'X').format('YYYY-MM-DD HH:mm:ss'))]);
+  }, [m('img.avatar', { src: activity.image_url }), m('h3', activity.action), m('h4', activity.main_description), m('em', activity.user), m('br'), m('em', activity.location), m('br'), m('em', moment(activity.updated_at / 1000, 'X').format('YYYY-MM-DD HH:mm:ss'))]);
 };
 
 },{"mithril":35,"moment":36}],45:[function(require,module,exports){
+var m = require('mithril');
+var moment = require('moment');
+module.exports = function (activity) {
+  return m('.card.mui-panel.image-added', {
+    'data-activity-id': activity.id
+  }, [m('img.avatar', { src: activity.image_url }), m('h3', 'Image Added onto Shape'), m('h4', activity.main_description), m('em', activity.user), m('br'), m('em', activity.location), m('br'), m('em', moment(activity.updated_at / 1000, 'X').format('YYYY-MM-DD HH:mm:ss'))]);
+};
+
+},{"mithril":35,"moment":36}],46:[function(require,module,exports){
 module.exports = {
   userCard: require('./user-card'),
   commentInShape: require('./comment-in-shape'),
   commentOnImage: require('./comment-on-image'),
-  imageAddedToShape: require('./image-added-to-shape')
+  imageAddedToShape: require('./image-added-to-shape'),
+  defaultActivity: require('./default-activity')
 };
 
-},{"./comment-in-shape":42,"./comment-on-image":43,"./image-added-to-shape":44,"./user-card":46}],46:[function(require,module,exports){
+},{"./comment-in-shape":42,"./comment-on-image":43,"./default-activity":44,"./image-added-to-shape":45,"./user-card":47}],47:[function(require,module,exports){
 var m = require('mithril');
 
 module.exports = function (props) {
@@ -47569,7 +47583,7 @@ module.exports = function (props) {
   })]);
 };
 
-},{"mithril":35}],47:[function(require,module,exports){
+},{"mithril":35}],48:[function(require,module,exports){
 var m = require('mithril');
 var components = require('./components');
 
@@ -47617,6 +47631,9 @@ module.exports = function (props) {
       feed = feed.reverse();
     }
     _.forEach(feed, activity => {
+      if (activity.image_url.indexOf('missing-image.png') > -1) {
+        activity.image_url = 'https://placeholdit.imgix.net/~text?txtsize=20&txt=image%20not%20available&w=100&h=100';
+      }
       switch (activity.action) {
         case 'useronwatchingimageaddedtoshape':
           allFeedsCards.push(components.imageAddedToShape(activity));
@@ -47627,6 +47644,8 @@ module.exports = function (props) {
         case 'useronwatchingcommentinshape':
           allFeedsCards.push(components.commentInShape(activity));
           break;
+        default:
+          allFeedsCards.push(components.defaultActivity(activity));
       }
     });
     if (!allFeedsCards.length) {
@@ -47661,6 +47680,9 @@ module.exports = function (props) {
           thisUserFeed = thisUserFeed.reverse();
         }
         _.forEach(thisUserFeed, activity => {
+          if (activity.image_url.indexOf('missing-image.png') > -1) {
+            activity.image_url = 'https://placeholdit.imgix.net/~text?txtsize=20&txt=image%20not%20available&w=100&h=100';
+          }
           switch (activity.action) {
             case 'useronwatchingimageaddedtoshape':
               columnCards.push(components.imageAddedToShape(activity));
@@ -47671,6 +47693,8 @@ module.exports = function (props) {
             case 'useronwatchingcommentinshape':
               columnCards.push(components.commentInShape(activity));
               break;
+            default:
+              columnCards.push(components.defaultActivity(activity));
           }
         });
         userColumns.push(m('article.column.mui-panel', columnCards));
@@ -47683,7 +47707,7 @@ module.exports = function (props) {
   };
 };
 
-},{"./components":45,"mithril":35}],48:[function(require,module,exports){
+},{"./components":46,"mithril":35}],49:[function(require,module,exports){
 // global dependencies
 var m = require('mithril');
 var _ = require('lodash');
@@ -47739,4 +47763,4 @@ function hideUserColumn(data) {
   thisUser.set({ inView: false });
 }
 
-},{"./Users.js":41,"./layout":47,"bluebird":4,"event-emitter":20,"jquery":21,"lodash":34,"mithril":35}]},{},[48]);
+},{"./Users.js":41,"./layout":48,"bluebird":4,"event-emitter":20,"jquery":21,"lodash":34,"mithril":35}]},{},[49]);

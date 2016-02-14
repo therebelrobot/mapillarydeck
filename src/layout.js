@@ -50,6 +50,9 @@ module.exports = function (props) {
       feed = feed.reverse()
     }
     _.forEach(feed, (activity) => {
+      if(activity.image_url.indexOf('missing-image.png')>-1){
+        activity.image_url = 'https://placeholdit.imgix.net/~text?txtsize=20&txt=image%20not%20available&w=100&h=100'
+      }
       switch (activity.action) {
         case 'useronwatchingimageaddedtoshape':
           allFeedsCards.push(components.imageAddedToShape(activity))
@@ -60,6 +63,8 @@ module.exports = function (props) {
         case 'useronwatchingcommentinshape':
           allFeedsCards.push(components.commentInShape(activity))
           break
+        default:
+          allFeedsCards.push(components.defaultActivity(activity))
       }
     })
     if (!allFeedsCards.length) {
@@ -94,6 +99,9 @@ module.exports = function (props) {
           thisUserFeed = thisUserFeed.reverse()
         }
         _.forEach(thisUserFeed, (activity) => {
+          if(activity.image_url.indexOf('missing-image.png')>-1){
+            activity.image_url = 'https://placeholdit.imgix.net/~text?txtsize=20&txt=image%20not%20available&w=100&h=100'
+          }
           switch (activity.action) {
             case 'useronwatchingimageaddedtoshape':
               columnCards.push(components.imageAddedToShape(activity))
@@ -104,6 +112,8 @@ module.exports = function (props) {
             case 'useronwatchingcommentinshape':
               columnCards.push(components.commentInShape(activity))
               break
+            default:
+              columnCards.push(components.defaultActivity(activity))
           }
         })
         userColumns.push(m('article.column.mui-panel', columnCards))
