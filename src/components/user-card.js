@@ -8,6 +8,7 @@ module.exports = function (props) {
     m('h3', props.user),
     m('em', 'user since ' + props.member_since),
     m('i.fa.fa-chevron-right', {
+      className: !props.arrowEvent?'hidden':'',
       config: (el, isInit, context) => {
         if (isInit) {return }
         el.onclick = (event) => {

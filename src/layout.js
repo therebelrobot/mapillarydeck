@@ -87,7 +87,7 @@ module.exports = function (props) {
           user: user.get('user'),
           avatar: user.get('avatar'),
           member_since: user.get('member_since'),
-          arrowEvent: 'ALLUSERS:showUserColumn'
+          arrowEvent: false
         }))
         var thisUserFeed = user.get('feed')
         if (user.get('reverseFeed')) {
