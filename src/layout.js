@@ -50,7 +50,7 @@ module.exports = function (props) {
       feed = feed.reverse()
     }
     _.forEach(feed, (activity) => {
-      if(activity.image_url.indexOf('missing-image.png')>-1){
+      if (activity.image_url.indexOf('missing-image.png') > -1) {
         activity.image_url = 'https://placeholdit.imgix.net/~text?txtsize=20&txt=image%20not%20available&w=100&h=100'
       }
       switch (activity.action) {
@@ -76,26 +76,26 @@ module.exports = function (props) {
     // Set up user columns
     var userColumns = []
     var showingUsers = props.users.filter({inView: true})
-    console.log(showingUsers)
     if (showingUsers && showingUsers.length) {
       _.forEach(showingUsers, (user) => {
         var columnCards = []
-        columnCards.push(m('button.mui-btn.mui-btn--danger',{
-          config:(el, isInit, context)=>{
-            if(isInit){return}
-            el.onclick = (event)=>{
-              window.__ee.emit('USER:hideUserColumn', {user:user.get('user')})
+        var thisUserName = user.get('user')
+        columnCards.push(m('button.mui-btn.mui-btn--danger', {
+          config: function (el, isInit, context) {
+            if (isInit) {return }
+            el.onclick = function (event) {
+              window.__ee.emit('USER:hideUserColumn', {user: thisUserName})
             }
           }
-          }, 'Remove user column'))
-          columnCards.push(m('button.mui-btn.mui-btn--default',{
-            config:(el, isInit, context)=>{
-              if(isInit){return}
-              el.onclick = (event)=>{
-                window.__ee.emit('USER:reverseFeed', {user:user.get('user')})
-              }
+        }, 'Remove user column'))
+        columnCards.push(m('button.mui-btn.mui-btn--default', {
+          config: function (el, isInit, context) {
+            if (isInit) {return }
+            el.onclick = function (event) {
+              window.__ee.emit('USER:reverseFeed', {user: thisUserName})
             }
-            }, 'Reverse Feed'))
+          }
+        }, 'Reverse Feed'))
         columnCards.push(components.userCard({
           user: user.get('user'),
           avatar: user.get('avatar'),
@@ -107,7 +107,7 @@ module.exports = function (props) {
           thisUserFeed = thisUserFeed.reverse()
         }
         _.forEach(thisUserFeed, (activity) => {
-          if(activity.image_url.indexOf('missing-image.png')>-1){
+          if (activity.image_url.indexOf('missing-image.png') > -1) {
             activity.image_url = 'https://placeholdit.imgix.net/~text?txtsize=20&txt=image%20not%20available&w=100&h=100'
           }
           switch (activity.action) {

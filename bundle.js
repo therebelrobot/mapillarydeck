@@ -47436,7 +47436,6 @@ var User = BackboneModel.extend({
   fetch: function fetchUserModel(props) {
     return new InternalPromise((resolve, reject) => {
       localForage.getItem(this.get('user')).then(storedUser => {
-        console.log(storedUser);
         if (!storedUser || !storedUser.avatar) {
           var url = 'https://a.mapillary.com/v2/u/' + this.get('user') + '?client_id=' + clientID;
           var userCall = request.get(url);
@@ -47447,7 +47446,6 @@ var User = BackboneModel.extend({
               return reject(err);
             }
             if (res.body) {
-              console.log(res.body.avatar);
               res.body.avatar = res.body.avatar || 'https://placeholdit.imgix.net/~text?txtsize=20&txt=avatar%20not%20available&w=100&h=100';
               this.set(res.body);
               return this.fetchFeed().then(resolve).catch(reject);
@@ -47455,7 +47453,7 @@ var User = BackboneModel.extend({
             reject();
           });
         } else {
-          console.log('Loading user from localForage');
+          console.log('loading from local data');
           this.set(storedUser);
           resolve();
         }
@@ -47473,8 +47471,10 @@ var User = BackboneModel.extend({
           return reject(err);
         }
         if (res.body) {
-          console.log(this.get('user'), res.body);
-          this.set(res.body);
+          var currentFeed = this.get('feed');
+          currentFeed.concat(res.body.feed);
+          currentFeed = _.uniq(currentFeed);
+          this.set({ feed: currentFeed });
           return resolve();
         }
         reject();
@@ -47482,8 +47482,10 @@ var User = BackboneModel.extend({
     });
   },
   pollFeed: function pollFeedUserModel(props) {
-    return new InternalPromise((resolve, reject) => {
-      resolve();
+    return this.fetchFeed().then(() => {
+      window.setTimeout(() => {
+        this.pollFeed(props);
+      }, 10000);
     });
   }
 });
@@ -47511,6 +47513,13 @@ var UserList = BackboneCollection.extend({
     var feeds = this.pluck('feed');
     feeds = _.flatten(feeds);
     return feeds;
+  },
+  pollFeeds: function pollFeedsUserListCollection() {
+    var userPolls = [];
+    this.each(function (user) {
+      userPolls.push(user.pollFeed());
+    });
+    InternalPromise.all(userPolls);
   }
 });
 
@@ -47655,27 +47664,27 @@ module.exports = function (props) {
     // Set up user columns
     var userColumns = [];
     var showingUsers = props.users.filter({ inView: true });
-    console.log(showingUsers);
     if (showingUsers && showingUsers.length) {
       _.forEach(showingUsers, user => {
         var columnCards = [];
+        var thisUserName = user.get('user');
         columnCards.push(m('button.mui-btn.mui-btn--danger', {
-          config: (el, isInit, context) => {
+          config: function (el, isInit, context) {
             if (isInit) {
               return;
             }
-            el.onclick = event => {
-              window.__ee.emit('USER:hideUserColumn', { user: user.get('user') });
+            el.onclick = function (event) {
+              window.__ee.emit('USER:hideUserColumn', { user: thisUserName });
             };
           }
         }, 'Remove user column'));
         columnCards.push(m('button.mui-btn.mui-btn--default', {
-          config: (el, isInit, context) => {
+          config: function (el, isInit, context) {
             if (isInit) {
               return;
             }
-            el.onclick = event => {
-              window.__ee.emit('USER:reverseFeed', { user: user.get('user') });
+            el.onclick = function (event) {
+              window.__ee.emit('USER:reverseFeed', { user: thisUserName });
             };
           }
         }, 'Reverse Feed'));
@@ -47755,6 +47764,7 @@ var app = {
       console.log('users loaded');
       // render now
       m.endComputation();
+      users.pollFeeds();
     });
   }
 };

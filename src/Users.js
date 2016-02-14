@@ -61,7 +61,6 @@ var User = BackboneModel.extend({
   fetch: function fetchUserModel (props) {
     return new InternalPromise((resolve, reject) => {
       localForage.getItem(this.get('user')).then((storedUser) => {
-        console.log(storedUser)
         if (!storedUser || !storedUser.avatar) {
           var url = 'https://a.mapillary.com/v2/u/' +
             this.get('user') +
@@ -72,7 +71,6 @@ var User = BackboneModel.extend({
           userCall.end((err, res) => {
             if (err) {return reject(err)}
             if (res.body) {
-              console.log(res.body.avatar)
               res.body.avatar = res.body.avatar || 'https://placeholdit.imgix.net/~text?txtsize=20&txt=avatar%20not%20available&w=100&h=100'
               this.set(res.body)
               return this.fetchFeed().then(resolve).catch(reject)
@@ -80,7 +78,7 @@ var User = BackboneModel.extend({
             reject()
           })
         } else {
-          console.log('Loading user from localForage')
+          console.log('loading from local data')
           this.set(storedUser)
           resolve()
         }
@@ -99,8 +97,10 @@ var User = BackboneModel.extend({
       userFeedCall.end((err, res) => {
         if (err) {return reject(err)}
         if (res.body) {
-          console.log(this.get('user'), res.body)
-          this.set(res.body)
+          var currentFeed = this.get('feed')
+          currentFeed.concat(res.body.feed)
+          currentFeed = _.uniq(currentFeed)
+          this.set({feed:currentFeed})
           return resolve()
         }
         reject()
@@ -108,8 +108,10 @@ var User = BackboneModel.extend({
     })
   },
   pollFeed: function pollFeedUserModel (props) {
-    return new InternalPromise((resolve, reject) => {
-      resolve()
+    return this.fetchFeed().then(()=>{
+      window.setTimeout(()=>{
+          this.pollFeed(props)
+      }, 10000)
     })
   }
 })
@@ -137,6 +139,13 @@ var UserList = BackboneCollection.extend({
     var feeds = this.pluck('feed')
     feeds = _.flatten(feeds)
     return feeds
+  },
+  pollFeeds:function pollFeedsUserListCollection(){
+    var userPolls = []
+    this.each(function(user){
+        userPolls.push(user.pollFeed())
+    })
+    InternalPromise.all(userPolls)
   }
 })
 

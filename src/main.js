@@ -35,6 +35,7 @@ var app = {
       console.log('users loaded')
       // render now
       m.endComputation()
+      users.pollFeeds()
     })
   }
 }
