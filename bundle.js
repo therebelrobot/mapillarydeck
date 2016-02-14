@@ -47659,7 +47659,7 @@ module.exports = function (props) {
     if (showingUsers && showingUsers.length) {
       _.forEach(showingUsers, user => {
         var columnCards = [];
-        columnCards.push(m('button.mui-btn.bui-btn--danger', {
+        columnCards.push(m('button.mui-btn.mui-btn--danger', {
           config: (el, isInit, context) => {
             if (isInit) {
               return;
@@ -47669,6 +47669,16 @@ module.exports = function (props) {
             };
           }
         }, 'Remove user column'));
+        columnCards.push(m('button.mui-btn.mui-btn--default', {
+          config: (el, isInit, context) => {
+            if (isInit) {
+              return;
+            }
+            el.onclick = event => {
+              window.__ee.emit('USER:reverseFeed', { user: user.get('user') });
+            };
+          }
+        }, 'Reverse Feed'));
         columnCards.push(components.userCard({
           user: user.get('user'),
           avatar: user.get('avatar'),
@@ -47738,6 +47748,7 @@ var app = {
     // set up event listeners
     window.__ee.on('ALLUSERS:showUserColumn', showUserColumn);
     window.__ee.on('USER:hideUserColumn', hideUserColumn);
+    window.__ee.on('USER:reverseFeed', reverseUserFeed);
 
     // Fetch the first batch of user info
     users.fetch().then(() => {
@@ -47758,9 +47769,15 @@ function showUserColumn(data) {
   thisUser.set({ inView: true });
 }
 function hideUserColumn(data) {
-  console.log('showing new column!', data.user);
+  console.log('hiding column!', data.user);
   var thisUser = users.find({ user: data.user });
   thisUser.set({ inView: false });
+}
+
+function reverseUserFeed(data) {
+  console.log('reversing feed!', data.user);
+  var thisUser = users.find({ user: data.user });
+  thisUser.set({ reverseFeed: !thisUser.get('reverseFeed') });
 }
 
 },{"./Users.js":41,"./layout":48,"bluebird":4,"event-emitter":20,"jquery":21,"lodash":34,"mithril":35}]},{},[49]);

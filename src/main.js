@@ -28,6 +28,7 @@ var app = {
     // set up event listeners
     window.__ee.on('ALLUSERS:showUserColumn', showUserColumn)
     window.__ee.on('USER:hideUserColumn', hideUserColumn)
+    window.__ee.on('USER:reverseFeed', reverseUserFeed)
 
     // Fetch the first batch of user info
     users.fetch().then(()=>{
@@ -48,7 +49,13 @@ function showUserColumn (data) {
   thisUser.set({inView:true})
 }
 function hideUserColumn (data) {
-  console.log('showing new column!', data.user)
+  console.log('hiding column!', data.user)
   var thisUser = users.find({user:data.user})
   thisUser.set({inView:false})
+}
+
+function reverseUserFeed (data) {
+  console.log('reversing feed!', data.user)
+  var thisUser = users.find({user:data.user})
+  thisUser.set({reverseFeed:!thisUser.get('reverseFeed')})
 }

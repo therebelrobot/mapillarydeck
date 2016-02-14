@@ -80,7 +80,7 @@ module.exports = function (props) {
     if (showingUsers && showingUsers.length) {
       _.forEach(showingUsers, (user) => {
         var columnCards = []
-        columnCards.push(m('button.mui-btn.bui-btn--danger',{
+        columnCards.push(m('button.mui-btn.mui-btn--danger',{
           config:(el, isInit, context)=>{
             if(isInit){return}
             el.onclick = (event)=>{
@@ -88,6 +88,14 @@ module.exports = function (props) {
             }
           }
           }, 'Remove user column'))
+          columnCards.push(m('button.mui-btn.mui-btn--default',{
+            config:(el, isInit, context)=>{
+              if(isInit){return}
+              el.onclick = (event)=>{
+                window.__ee.emit('USER:reverseFeed', {user:user.get('user')})
+              }
+            }
+            }, 'Reverse Feed'))
         columnCards.push(components.userCard({
           user: user.get('user'),
           avatar: user.get('avatar'),
