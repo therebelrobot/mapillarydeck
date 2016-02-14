@@ -40925,8 +40925,37 @@ var _ = require('lodash');
 var InternalPromise = Promise || require('bluebird');
 var request = require('superagent');
 
+var clientID = 'Tm01Y1kzQWpyN2RlYWczRzM0MnRVUTpjNzQ0ZDVlYTJlMTYyMmE5';
+
+var defaultUserList = ['jesolem', 'gyllen', 'peterneubauer'];
+
+/*'yubkuang',*/
+/*'paugargallo',*/
+/*'oscarlorentz',*/
+/*'kamfski',*/
+/*'uddback',*/
+/*'globalbanana',*/
+/*'janineyoong',*/
+/*'travel_193',*/
+/*'juhaszlevi',*/
+/*'katrinhumal'*/
+/* None of these users returned anything */
 var User = BackboneModel.extend({
-  defaults: {},
+  defaults: {
+    about: '',
+    avatar: '',
+    connections_all: 0,
+    distance_all: 0,
+    histogram: [],
+    images_none_processed: 0,
+    images_hidden: 44,
+    images_all: 0,
+    member_since: '',
+    user: '',
+    user_uuid: '',
+    feed: [],
+    inView: false
+  },
   initialize: function InitializeUserModel() {
     this.on('change', function (model) {
       console.log('something changed in user!');
@@ -40935,12 +40964,19 @@ var User = BackboneModel.extend({
   },
   fetch: function fetchUserModel(props) {
     return new InternalPromise((resolve, reject) => {
-      var url;
+      var url = 'https://a.mapillary.com/v2/u/' + this.get('user') + '?client_id=' + clientID;
       var userCall = request.get(url);
       userCall.type('json');
       userCall.accept('json');
       userCall.end((err, res) => {
-        if (err) return reject(err);
+        if (err) {
+          return reject(err);
+        }
+        if (res.body) {
+          this.set(res.body);
+          return resolve();
+        }
+        reject();
       });
     });
   },
@@ -40951,7 +40987,14 @@ var User = BackboneModel.extend({
       userFeedCall.type('json');
       userFeedCall.accept('json');
       userFeedCall.end((err, res) => {
-        if (err) return reject(err);
+        if (err) {
+          return reject(err);
+        }
+        if (res.body) {
+          this.set(res.body);
+          return resolve();
+        }
+        reject();
       });
     });
   }
@@ -40965,15 +41008,20 @@ var UserList = BackboneCollection.extend({
 
   fetch: function fetchUserListCollection(props) {
     return new InternalPromise((resolve, reject) => {
-      var url;
-      var envListCall = request.get(url);
-      envListCall.type('json');
-      envListCall.accept('json');
-      envListCall.end((err, res) => {
-        if (err) return reject(err);
+      var initialUsers = _.clone(defaultUserList);
+      initialUsers = _.map(initialUsers, user => {
+        return new User({ user: user });
       });
+      this.set(initialUsers);
+      var fetchAllUsers = [];
+      this.each(user => {
+        fetchAllUsers.push(user.fetch(props));
+      });
+      InternalPromise.all(fetchAllUsers).then(resolve).catch(reject);
     });
-  }
+  },
+  fetchNewUser: function fetchNewUserListCollection(props) {},
+  fetchFeeds: function fetchUserListCollection(props) {}
 });
 
 module.exports = {
@@ -40985,8 +41033,47 @@ module.exports = {
 var m = require('mithril');
 
 module.exports = function (props) {
+  // this is run on instantiation
   return function mithrilLayout(ctrl) {
-    return m('.wrapper', [m('nav.mui-appbar', [m('.logo', [m('i.fa.fa-map-o'), ' ', 'MapillaryDeck'])]), m('section.content', [m('article.column.mui-panel', [m('.card.mui-panel', [m('img.avatar', { src: 'http://placehold.it/100x100' })]), m('.card.mui-panel'), m('.card.mui-panel'), m('.card.mui-panel'), m('.card.mui-panel')]), m('article.column.mui-panel', [m('.card.mui-panel'), m('.card.mui-panel'), m('.card.mui-panel'), m('.card.mui-panel'), m('.card.mui-panel')]), m('article.column.mui-panel', [m('.card.mui-panel'), m('.card.mui-panel'), m('.card.mui-panel'), m('.card.mui-panel'), m('.card.mui-panel')]), m('article.column.mui-panel', [m('.card.mui-panel'), m('.card.mui-panel'), m('.card.mui-panel'), m('.card.mui-panel'), m('.card.mui-panel')])])]);
+    // this is run on redraw
+
+    // set up user column
+    var userCards = [];
+    var theseUsers = [];
+    props.users.each(user => {
+      var username = user.get('user');
+      console.log(user.get('user'), user.get('avatar'), user.get('member_since'));
+      if (username.indexOf(props.settings.searchQuery()) === 0) {
+        theseUsers.push(user);
+      }
+    });
+    _.forEach(theseUsers, user => {
+
+      userCards.push(m('.card.mui-panel', {
+        'data-user': user.get('user')
+      }, [m('img.avatar', { src: user.get('avatar') }), m('h3', user.get('user')), m('em', 'user since ' + user.get('member_since')), m('i.fa.fa-chevron-right', {
+        config: (el, isInit, context) => {
+          if (isInit) {
+            return;
+          }
+          el.onclick = event => {
+            window.__ee.emit('ALLUSERS:showUserColumn', { user: user.get('user') });
+          };
+        }
+      })]));
+    });
+    if (!userCards.length) {
+      userCards.push(m('.card.mui-panel', [m('h3', 'No user found with the query'), m('em', props.settings.searchQuery())]));
+    }
+    // add search bar to users column
+    userCards.unshift(m('.mui-textfield', [m('input', {
+      type: 'text',
+      placeholder: 'Search',
+      onchange: m.withAttr('value', props.settings.searchQuery),
+      onkeyup: m.withAttr('value', props.settings.searchQuery),
+      value: props.settings.searchQuery()
+    })]));
+    return m('.wrapper', [m('nav.mui-appbar', [m('.logo', [m('i.fa.fa-map-o'), ' ', 'MapillaryDeck'])]), m('section.content', [m('article.column.mui-panel', userCards), m('article.column.mui-panel', [m('.card.mui-panel'), m('.card.mui-panel'), m('.card.mui-panel'), m('.card.mui-panel'), m('.card.mui-panel')]), m('article.column.mui-panel', [m('.card.mui-panel'), m('.card.mui-panel'), m('.card.mui-panel'), m('.card.mui-panel'), m('.card.mui-panel')]), m('article.column.mui-panel', [m('.card.mui-panel'), m('.card.mui-panel'), m('.card.mui-panel'), m('.card.mui-panel'), m('.card.mui-panel')])])]);
   };
 };
 
@@ -40999,19 +41086,45 @@ window.jQuery = require('jquery'); // because backbone is complaining
 
 // Set up internal model and layouts
 var User = require('./Users.js');
+var users = window.users = new User.UserList();
 var layout = require('./layout');
+
+var appSettings = {};
 
 // set up global event emitter
 window.__ee = require('event-emitter')();
 
 // set up app structure
 var app = {
-  view: layout({ userModel: User }),
+  view: layout({ users: users, settings: appSettings }),
   controller: function () {
     console.log('controller loaded');
+    // halt rendering until user info is pulled
+    m.startComputation();
+
+    // set up temorary in-app settings
+    appSettings.searchQuery = m.prop('');
+
+    // set up event listeners
+    window.__ee.on('ALLUSERS:showUserColumn', showUserColumn);
+
+    // Fetch the first batch of user info
+    users.fetch().then(() => {
+      console.log('users loaded');
+      // render now
+      m.endComputation();
+    });
   }
 };
+
 // initialize app
 m.mount(document.getElementById("mapillarydeck-app"), app);
+
+// set up event fired functions
+function showUserColumn(data) {
+  console.log('showing new column!', data.user);
+  var thisUser = users.find({ user: data.user });
+  thisUser.set({ inView: true });
+}
 
 },{"./Users.js":39,"./layout":40,"bluebird":4,"event-emitter":20,"jquery":21,"lodash":33,"mithril":34}]},{},[41]);
