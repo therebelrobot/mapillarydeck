@@ -1,6 +1,6 @@
 {
   "name": "mapillarydeck",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "A Mitrhil-driven example of the Mapillary user API",
   "main": "index.html",
   "scripts": {
