@@ -27,6 +27,7 @@ var app = {
 
     // set up event listeners
     window.__ee.on('ALLUSERS:showUserColumn', showUserColumn)
+    window.__ee.on('USER:hideUserColumn', hideUserColumn)
 
     // Fetch the first batch of user info
     users.fetch().then(()=>{
@@ -45,4 +46,9 @@ function showUserColumn (data) {
   console.log('showing new column!', data.user)
   var thisUser = users.find({user:data.user})
   thisUser.set({inView:true})
+}
+function hideUserColumn (data) {
+  console.log('showing new column!', data.user)
+  var thisUser = users.find({user:data.user})
+  thisUser.set({inView:false})
 }

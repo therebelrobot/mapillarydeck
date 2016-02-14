@@ -40,10 +40,10 @@ var User = BackboneModel.extend({
     user_uuid: '',
     feed: [],
     inView: false,
+    reverseFeed: false
   },
   initialize: function InitializeUserModel () {
     this.on('change', function (model) {
-      console.log('something changed in user!')
       m.redraw(true)
     })
   },
@@ -59,7 +59,7 @@ var User = BackboneModel.extend({
         if (err) {return reject(err)}
         if (res.body){
           this.set(res.body)
-          return resolve()
+          return this.fetchFeed().then(resolve).catch(reject)
         }
         reject()
       })
@@ -67,7 +67,9 @@ var User = BackboneModel.extend({
   },
   fetchFeed: function fetchFeedUserModel (props) {
     return new InternalPromise((resolve, reject) => {
-      var url
+      var url = 'https://a.mapillary.com/v2/u/' +
+        this.get('user') +
+        '/feed?client_id=' + clientID
       var userFeedCall = request.get(url)
       userFeedCall.type('json')
       userFeedCall.accept('json')
@@ -80,13 +82,17 @@ var User = BackboneModel.extend({
         reject()
       })
     })
+  },
+  pollFeed: function pollFeedUserModel (props){
+    return new InternalPromise((resolve, reject) => {
+      resolve()
+    })
   }
 })
 
 var UserList = BackboneCollection.extend({
   model: User,
   initialize: function initializeUserList () {
-    console.log('User List Collection instantiated')
   },
 
   fetch: function fetchUserListCollection (props) {
@@ -104,7 +110,11 @@ var UserList = BackboneCollection.extend({
     })
   },
   fetchNewUser: function fetchNewUserListCollection (props) {},
-  fetchFeeds: function fetchUserListCollection (props) {}
+  fetchFeeds: function fetchUserListCollection (props) {
+    var feeds = this.pluck('feed')
+    feeds = _.flatten(feeds)
+    return feeds
+  }
 })
 
 module.exports = {
